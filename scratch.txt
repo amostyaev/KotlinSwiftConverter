@@ -1,0 +1,62 @@
+fun parseFile(): MutableList<Lexeme> {
+    val result = mutableListOf<Lexeme>()
+    val text = File(source).reader().readText()
+    var index = 0
+    while (index < text.length) {
+        val divider = dividerRegex.find(text, index)
+        val lex = if (divider != null) text.substring(index, divider.range.first) else text.substring(index)
+        if (eolRegex.find(lex) != null) {
+            result.add(DelimiterLexeme(Delimiter.EOL))
+        } else if (lex.trim().isNotEmpty()) {
+            result.add(formLexeme(lex))
+        }
+        if (divider == null) break
+
+        val substring = text.substring(divider.range.first)
+        val delimiter = Delimiter.values().find { substring.startsWith(it.kotlinValue) }
+        index = when (delimiter) {
+            null -> divider.range.first + 1
+            Delimiter.CommentLine -> {
+                val commentStart = divider.range.first + delimiterValue(delimiter).length
+                val eol = eolRegex.find(text, commentStart)
+                if (eol != null) {
+                    result.add(DelimiterLexeme(Delimiter.CommentLine))
+                    result.add(ConstantLexeme(text.substring(commentStart, eol.range.first), ConstantType.AsIs))
+                }
+                eol?.range?.last ?: text.length
+            }
+            Delimiter.CommentBlockStart -> {
+                val commentStart = divider.range.first + delimiterValue(delimiter).length
+                val blockEnd = blockEndRegex.find(text, commentStart)
+                if (blockEnd != null) {
+                    result.add(DelimiterLexeme(Delimiter.CommentBlockStart))
+                    result.add(
+                        ConstantLexeme(
+                            text.substring(commentStart, blockEnd.range.first),
+                            ConstantType.AsIs
+                        )
+                    )
+                    result.add(DelimiterLexeme(Delimiter.CommentBlockEnd))
+                }
+                (blockEnd?.range?.last ?: text.length) + 1
+            }
+            Delimiter.Quote -> {
+                val stringEnd = stringEndRegex.find(text, divider.range.last + 1)
+                if (stringEnd != null) {
+                    result.add(
+                        ConstantLexeme(
+                            text.substring(divider.range.last + 1, stringEnd.range.first),
+                            ConstantType.String
+                        )
+                    )
+                }
+                (stringEnd?.range?.last ?: text.length) + 1
+            }
+            else -> {
+                result.add(DelimiterLexeme(delimiter))
+                divider.range.first + delimiterValue(delimiter).length
+            }
+        }
+    }
+    return result
+}
