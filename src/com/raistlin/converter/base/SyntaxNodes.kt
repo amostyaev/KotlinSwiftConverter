@@ -1,3 +1,6 @@
+package com.raistlin.converter.base
+
+abstract class SyntaxNode
 
 class ModuleNode {
 
@@ -8,13 +11,6 @@ class ModuleNode {
 }
 
 class TextNode(val lexemes: List<Lexeme>) : SyntaxNode()
-
-
-val x = 0
-
-package com.raistlin.converter.base
-
-abstract class SyntaxNode
 
 class FunctionNode(val name: String, val specification: TextNode, val body: TextNode) : SyntaxNode()
 

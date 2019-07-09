@@ -22,5 +22,6 @@ enum class Keyword(val kotlinValue: String, val swiftValue: String = kotlinValue
     As("as"),
 
     Fun("fun", "func"),
+    Class("class"),
 
 }

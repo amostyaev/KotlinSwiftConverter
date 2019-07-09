@@ -44,3 +44,5 @@ class ConstantLexeme(private val value: String, private val type: ConstantType) 
 }
 
 fun Lexeme.isDelimiter(delimiter: Delimiter) = this is DelimiterLexeme && this.delimiter == delimiter
+
+fun Lexeme.isKeyword(keyword: Keyword) = this is KeywordLexeme && this.keyword == keyword

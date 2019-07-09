@@ -5,20 +5,55 @@ import java.lang.StringBuilder
 
 class Formatter {
 
+    fun formatNodes(module: ModuleNode): String {
+        val sb = StringBuilder()
+        for (node in module.childNodes) {
+            formatNode(sb, node)
+        }
+        return sb.toString()
+    }
+
     fun formatLexemes(lexemes: List<Lexeme>): String {
         val sb = StringBuilder()
         for ((index, lexeme) in lexemes.withIndex()) {
             when (lexeme) {
-                is KeywordLexeme -> print(lexeme.keyword.swiftValue)
-                is DelimiterLexeme -> print(lexeme.delimiter.swiftValue)
-                is IdentifierLexeme -> print(lexeme.identifier)
-                is ConstantLexeme -> print(lexeme.formattedValue)
+                is KeywordLexeme -> sb.append(lexeme.keyword.swiftValue)
+                is DelimiterLexeme -> sb.append(lexeme.delimiter.swiftValue)
+                is IdentifierLexeme -> sb.append(lexeme.identifier)
+                is ConstantLexeme -> sb.append(lexeme.formattedValue)
             }
             if (needSpaceAfter(lexeme, lexemes.getOrNull(index + 1))) {
-                print(" ")
+                sb.append(" ")
             }
         }
         return sb.toString()
+    }
+
+    private fun formatNode(sb: StringBuilder, node: SyntaxNode) {
+        if (node is TextNode) {
+            sb.append(formatLexemes(node.lexemes))
+        } else if (node is FunctionNode) {
+            sb.append("--Function ${node.name}--\n")
+            sb.append(formatLexemes(node.specification.lexemes))
+            sb.append("{\n")
+            sb.append(formatLexemes(node.body.lexemes))
+            sb.append("}\n")
+            sb.append("--Function ${node.name}--\n")
+        } else if (node is ClassNode) {
+            sb.append("--Class ${node.name}--\n")
+            sb.append(formatLexemes(node.specification.lexemes))
+            sb.append("{\n")
+            sb.append("--Properties ${node.name}--\n")
+            for (property in node.properties) {
+                formatNode(sb, property)
+            }
+            sb.append("--Methods ${node.name}--\n")
+            for (method in node.methods) {
+                formatNode(sb, method)
+            }
+            sb.append("}\n")
+            sb.append("--Class ${node.name}--\n")
+        }
     }
 
     private fun needSpaceAfter(lexeme: Lexeme, lexemeAfter: Lexeme?): Boolean {
